@@ -1,0 +1,21 @@
+# See: http://code.google.com/p/arduino/wiki/Platforms
+
+menu.cpu_frq=CPU Frequency
+menu.cpu_variant=CPU
+menu_os_variant=OS
+##############################################################
+
+w806.name=w806_duino
+w806.upload.protocol=xmode
+w806.upload.maximum_size=294912
+w806.build.mcu=ck804ef
+w806.menu.clock.24internal=24 MHz (internal), 5V
+w806.menu.clock.24internal.build.f_cpu=24000000L
+w806.menu.clock.16external=16 MHz (internal), 3.3V or 5V
+w806.menu.clock.16external.build.f_cpu=16000000L
+w806.build.board=HLK_W806
+w806.build.core=w806
+w806.build.variant=w806
+w806.build.mcpu=ck804ef
+
+##############################################################
