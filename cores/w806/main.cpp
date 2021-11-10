@@ -16,17 +16,25 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <Arduino.h>
 #include <stdio.h>
 #include "wm_hal.h"
+GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 int main(void)
 {
-    //SystemClock_Config(CPU_CLK_160M);
-    //HAL_Init();
+    SystemClock_Config(CPU_CLK_160M);
+   //HAL_Init();
    // GPIO_Init();
-    setup();
+   GPIO_InitStruct.Pin = GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+   setup();
     
     for (;;) {
         loop();
@@ -34,6 +42,9 @@ int main(void)
             //serialEvent();
         }
     }
-    
      return 1;
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -17,6 +17,7 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+
 #ifndef Arduino_h
 #define Arduino_h
 
@@ -28,6 +29,10 @@
 #include <stdio.h>
 
 #include "pins_arduino.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //Macro-based digital IO fucntions
 //#include "wiring_digita.h"
 
@@ -185,5 +190,8 @@ uint8_t digitalRead(uint8_t pin);
 void setup(void);
 void loop(void);
 
+#endif
 
+#ifdef __cplusplus
+}
 #endif
