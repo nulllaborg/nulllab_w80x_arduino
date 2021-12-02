@@ -53,21 +53,30 @@ compiler.cpp.extra_flags=
 compiler.ar.extra_flags=
 compiler.objcopy.eep.extra_flags=
 compiler.elf2bin.extra_flags=
-
-compiler.includes="-I{build.core.path}/include" "-I{build.core.path}/include/arch/{build.arch}" "-I{build.core.path}/include/arch/{build.arch}/csi_dsp" "-I{build.core.path}/include/arch/{build.arch}/csi_core" "-I{build.core.path}/include/driver" 
+compiler.includes="-I{runtime.tools.csky-abiv2-elf-tools.path}/csky-elfabiv2/include" "-I{build.core.path}/include" "-I{build.core.path}/include/arch/{build.arch}" "-I{build.core.path}/include/arch/{build.arch}/csi_dsp" "-I{build.core.path}/include/arch/{build.arch}/csi_core" "-I{build.core.path}/include/driver" 
 compiler.libs=-L{build.core.path}/lib -Wl,--start-group -Wl,--end-group -ldsp -lm
 
-# AVR compile patterns
+# Build image
+img_type=1
+run_img_header=8010000
+run_img_pos=8010400
+upd_img_pos=8010000
+
+sec_img_header=8002000
+sec_img_pos=8002400
+build.tools.path={runtime.hardware.path}/tools/
+
+# w806 compile patterns
 # --------------------
 
 ## Compile c files
-recipe.c.o.pattern="{compiler.path}{compiler.c.cmd}" -c "{source_file}" -mcpu={build.mcpu} {compiler.c.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version}  -DARDUINO_{build.board} -DTLS_CONFIG_CPU_{build.arch}=1 {compiler.c.extra_flags} {build.extra_flags} {compiler.includes} {includes} -MMD -MP -MT"{object_file}" -o "{object_file}"
+recipe.c.o.pattern="{compiler.path}{compiler.c.cmd}" -c "{source_file}" -mcpu={build.mcpu} {compiler.c.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DTLS_CONFIG_CPU_{build.arch}=1 {compiler.c.extra_flags} {build.extra_flags} {compiler.includes} {includes} -MMD -MP -MT{object_file} -o "{object_file}"
 
 ## Compile c++ files
-recipe.cpp.o.pattern="{compiler.path}{compiler.cpp.cmd}" -c "{source_file}" -mcpu={build.mcpu} {compiler.cpp.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DTLS_CONFIG_CPU_{build.arch}=1 {compiler.cpp.extra_flags} {compiler.includes} {build.extra_flags} {includes} -MMD -MP -MT"{object_file}" -o "{object_file}"
+recipe.cpp.o.pattern="{compiler.path}{compiler.cpp.cmd}" -c "{source_file}" -mcpu={build.mcpu} {compiler.cpp.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DTLS_CONFIG_CPU_{build.arch}=1 {compiler.cpp.extra_flags} {compiler.includes} {build.extra_flags} {includes} -MMD -MP -MT{object_file} -o "{object_file}"
 
 ## Compile S files
-recipe.S.o.pattern="{compiler.path}{compiler.c.cmd}" -c "{source_file}" -mcpu={build.mcpu} {compiler.S.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DTLS_CONFIG_CPU_{build.arch}=1 {compiler.S.extra_flags} {build.extra_flags} {compiler.includes} {includes} -MMD -MP -MT"{object_file}" -o "{object_file}"
+recipe.S.o.pattern="{compiler.path}{compiler.c.cmd}" -c "{source_file}" -mcpu={build.mcpu} {compiler.S.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DTLS_CONFIG_CPU_{build.arch}=1 {compiler.S.extra_flags} {build.extra_flags} {compiler.includes} {includes} -MMD -MP -MT{object_file} -o "{object_file}"
 
 ## Create archives
 # archive_file_path is needed for backwards compatibility with IDE 1.6.5 or older, IDE 1.6.6 or newer overrides this value
@@ -75,11 +84,13 @@ archive_file_path={build.path}/{archive_file}
 recipe.ar.pattern="{compiler.path}{compiler.ar.cmd}" {compiler.ar.flags} {compiler.ar.extra_flags} "{archive_file_path}" "{object_file}"
 
 ## Combine gc-sections, archives, and objects
-recipe.c.combine.pattern="{compiler.path}{compiler.c.elf.cmd}" -o "{build.path}/{build.project_name}.elf" {compiler.c.elf.extra_flags} "-Wl,--ckmap={build.path}/{build.project_name}.map" -mcpu={build.mcpu} {compiler.c.elf.flags} "{compiler.ldflags}" "-L{build.path}"  -L{build.core.path}/lib {object_files} "{archive_file_path}" {compiler.libs}
+recipe.c.combine.pattern="{compiler.path}{compiler.c.elf.cmd}" -o "{build.path}/{build.project_name}.elf" {compiler.c.elf.extra_flags} -Wl,--ckmap={build.path}/{build.project_name}.map -mcpu={build.mcpu} {compiler.c.elf.flags} {compiler.ldflags} -L{build.path}  -L{build.core.path}/lib {object_files} "{archive_file_path}" {compiler.libs}
 
-## Create output files (.eep and .bin)
+## Create output files (.elf and .bin)
 recipe.objcopy.bin.pattern="{compiler.path}{compiler.elf2bin.cmd}" {compiler.elf2bin.flags} {compiler.elf2bin.extra_flags} "{build.path}/{build.project_name}.elf" "{build.path}/{build.project_name}.bin"
-#recipe.objcopy.eep.pattern="{compiler.path}{compiler.objcopy.cmd}" {compiler.objcopy.eep.flags} {compiler.objcopy.eep.extra_flags} "{build.path}/{build.project_name}.elf" "{build.path}/{build.project_name}.eep"
+#recipe.objcopy.eep.pattern="{build.tools.path}/wm_tool.exe" -b {build.path}/{build.project_name}.bin -o {build.path}/{build.project_name} -it {img_type} -fc 0 -ra {run_img_pos} -ih {run_img_header} -ua {upd_img_pos} -nh 0  -un 0
+#recipe.objcopy.img.pattern="{build.tools.path}/wm_tool.exe" -b {build.tools.path}/W806_secboot.bin -o {build.path}/{build.project_name}_secboot -it 0 -fc 0 -ra {sec_img_pos} -ih {sec_img_header} -ua {upd_img_pos} -nh {run_img_header} -un 0 & type "{build.path}\{build.project_name}_secboot.img" {build.path}\{build.project_name}.img > {build.path}\{build.project_name}.fls
+recipe.objcopy.fls.pattern="{build.tools.path}/build" "{build.tools.path}/wm_tool.exe" {build.path}\{build.project_name} {build.tools.path}\W806_secboot.bin
 
 ## Save bin
 recipe.output.tmp_file={build.project_name}.bin
@@ -92,13 +103,23 @@ recipe.size.regex.data=^(?:\.data|\.bss|\.noinit)\s+([0-9]+).*
 recipe.size.regex.eeprom=^(?:\.eeprom)\s+([0-9]+).*
 
 ## Preprocessor
-#preproc.includes.flags=-w -x c++ -M -MG -MP
-#recipe.preproc.includes="{compiler.path}{compiler.cpp.cmd}" -mcpu={build.mcpu} {compiler.cpp.flags} {preproc.includes.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DTLS_CONFIG_CPU_{build.arch}=1 {compiler.cpp.extra_flags} {build.extra_flags} {compiler.libs.c.flags} {includes} "{source_file}"
+preproc.includes.flags=-w -x c++ -M -MG -MP
+recipe.preproc.includes="{compiler.path}{compiler.cpp.cmd}" -mcpu={build.mcpu} {compiler.cpp.flags} {preproc.includes.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DTLS_CONFIG_CPU_{build.arch}=1 {compiler.cpp.extra_flags} {build.extra_flags} {compiler.libs.c.flags} {includes} "{source_file}"
 
 #preproc.macros.flags=-w -x c++ -E -CC
 preproc.macros.flags=
 recipe.preproc.macros="{compiler.path}{compiler.cpp.cmd}" -mcpu={build.mcpu} {compiler.cpp.flags} {preproc.macros.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DTLS_CONFIG_CPU_{build.arch}=1 {compiler.cpp.extra_flags} {compiler.libs.c.flags} {build.extra_flags} {includes} "{source_file}" -o "{preprocessed_file_path}"
 
-# X806 Uploader/Programmers tools
+# W806 Uploader tools
 # ------------------------------
+
+tools.serial_upload.path={runtime.hardware.path}/tools
+tools.serial_upload.cmd.path={path}/wm_tool.exe
+
+tools.serial_upload.upload.params.verbose=-c
+tools.serial_upload.upload.params.quiet=-q -q
+# tools.avrdude.upload.verify is needed for backwards compatibility with IDE 1.6.8 or older, IDE 1.6.9 or newer overrides this value
+tools.serial_upload.upload.verify=
+tools.serial_upload.upload.params.noverify=-V
+tools.serial_upload.upload.pattern="{cmd.path}" {upload.params.verbose} {serial.port} -ws 115200 -ds {upload.speed} -dl "{build.path}/{build.project_name}.fls"
 
